@@ -23,7 +23,7 @@
   --rail:120px;
 }
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:#FAFAEF}  /* painted so the barrel roll has no white corners */
 body{margin:0;font-family:var(--body);color:var(--night);background:var(--cloud);overflow-x:hidden}
 
 
@@ -39,7 +39,11 @@ body{margin:0;font-family:var(--body);color:var(--night);background:var(--cloud)
    dark ink over the light ones. --ink and --acc are set from JS. */
 .rail{position:fixed;left:0;top:0;bottom:0;width:var(--rail);z-index:12;
   display:none;pointer-events:none}
-@media(min-width:1400px){.rail{display:block}}
+/* 1240 rather than 1400: the shell is 1000px wide, so content starts at
+   ((vw-1000)/2 + 26). At 1240 that is 146px and the aircraft's distance
+   tag ends around 114px — clear. Below this the two collide. This buys
+   the rail on 1280/1366 laptops and iPad Pro 12.9 in landscape. */
+@media(min-width:1240px){.rail{display:block}}
 
 /* the dashes come from a mask so the background is free to carry the
    colour gradient that changes at each section boundary */
@@ -173,8 +177,8 @@ body.loading{overflow:hidden}
 .hero .anno{color:var(--sky)}
 .hero h1 .hl{color:var(--sunset)}
 .hero-in{display:grid;gap:34px;align-items:center}
-@media(min-width:940px){.hero-in{grid-template-columns:1.15fr .85fr}}
-.e6b{width:min(310px,74vw);aspect-ratio:1;margin:0 auto}
+@media(min-width:940px){.hero-in{grid-template-columns:1.08fr .92fr}}
+.e6b{width:min(400px,84vw);aspect-ratio:1;margin:0 auto}
 .e6b svg{width:100%;height:100%;overflow:visible}
 .e6b .ring{fill:none;stroke:var(--sky);stroke-width:1.3;opacity:.5}
 .e6b .tick{stroke:var(--sky);opacity:.35;stroke-width:1}
@@ -183,6 +187,9 @@ body.loading{overflow:hidden}
 .e6b .num.inner{font-size:7.5px;opacity:.72}
 .e6b .rot{transform-origin:120px 120px;animation:sweep 150s linear infinite}
 .e6b .idx{fill:var(--sunset)}
+.e6b .rate{fill:var(--sunset)}
+.e6b .rlab{font-family:var(--mono);font-weight:600;font-size:5.5px;fill:var(--sunset);
+  letter-spacing:.08em;opacity:.9}
 .e6b .win{fill:none;stroke:var(--sky);stroke-width:1.1;opacity:.55}
 .e6b .wlab{font-family:var(--mono);font-weight:600;font-size:6px;fill:var(--sky);
   opacity:.8;letter-spacing:.5px}
@@ -197,7 +204,7 @@ body.loading{overflow:hidden}
 .e6b svg{cursor:grab}
 .e6b.live svg{cursor:grabbing}
 .e6b.live .rot{animation:none}          /* the idle sweep would fight the drag */
-.e6b-readout{display:none;margin:18px auto 0;max-width:300px;
+.e6b-readout{display:none;margin:18px auto 0;max-width:360px;
   grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(178,229,237,.3);
   border:1px solid rgba(178,229,237,.3)}
 .e6b-readout.on{display:grid}
@@ -232,6 +239,125 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
   font-family:var(--mono);font-weight:600;font-size:.55rem;letter-spacing:.12em;
   white-space:nowrap;color:var(--acc);opacity:0;transition:opacity .2s}
 .ship:hover .ship-tag{opacity:1}
+
+/* ---- touch devices ---------------------------------------------------
+   Most of this community reads on a phone or an iPad. Keyboard sequences
+   are a desktop luxury, so everything below is reachable with a thumb.
+   Nothing here removes a desktop egg; it only adds a second door. */
+@media (hover:none){
+  .ship-tag{opacity:1}          /* nothing to hover with, so just show it */
+}
+/* Once the E6B is armed the drag belongs to us, not to the page scroller.
+   Deliberately scoped to .live — an idle instrument must stay scrollable
+   or you cannot get past the hero with a thumb. */
+.e6b.live svg{touch-action:none}
+
+/* =====================================================================
+   PRINT - the flight plan easter egg
+   The screen page steps aside completely and a navigation log takes its
+   place. Everything here is hairlines and foreground SVG, so it survives
+   a printer with background graphics switched off - which is the default
+   in every browser's print dialog.
+   ===================================================================== */
+.printout{display:none}
+@page{size:A4;margin:14mm}
+@media print{
+  /* the sprite stays: <use> resolves against it, and it is already 0x0 */
+  body>*:not(.printout):not(svg){display:none !important}
+  html,body{background:#fff !important;margin:0;padding:0}
+  body{color:#003C3E;font-family:var(--body);font-size:9.6pt;line-height:1.45}
+  .printout{display:block}
+
+  .pr-head{display:flex;justify-content:space-between;align-items:flex-start;
+    gap:18mm;padding-bottom:3.5mm;border-bottom:1.6pt solid #003C3E}
+  .pr-brand{display:flex;align-items:center;gap:3.5mm}
+  .pr-brand svg{width:13mm;height:13mm;flex:none}
+  .pr-brand b{display:block;font-family:var(--display);font-size:16pt;
+    letter-spacing:-.03em;line-height:1.05}
+  .pr-brand span{display:block;font-family:var(--mono);font-size:7pt;
+    letter-spacing:.24em;text-transform:uppercase;margin-top:1mm}
+
+  .pr-meta{border-collapse:collapse;font-family:var(--mono);font-size:7.6pt}
+  .pr-meta th{text-align:left;font-weight:400;letter-spacing:.14em;
+    text-transform:uppercase;padding:.6mm 5mm .6mm 0;opacity:.65}
+  .pr-meta td{font-weight:600;padding:.6mm 0;min-width:26mm}
+
+  .pr-plan{width:100%;border-collapse:collapse;margin-top:4mm;
+    font-family:var(--mono);font-size:7.6pt}
+  .pr-plan th{text-align:left;font-weight:400;letter-spacing:.13em;
+    text-transform:uppercase;opacity:.65;padding:1.6mm 3mm 1.6mm 0;
+    border-bottom:.5pt solid #B7CBCA;white-space:nowrap}
+  .pr-plan td{font-weight:600;font-size:8.6pt;padding:1.6mm 7mm 1.6mm 0;
+    border-bottom:.5pt solid #B7CBCA;white-space:nowrap}
+
+  .pr-log{width:100%;border-collapse:collapse;margin-top:7mm}
+  .pr-log caption{caption-side:top;text-align:left;font-family:var(--mono);
+    font-size:7pt;letter-spacing:.2em;text-transform:uppercase;opacity:.6;
+    padding-bottom:2mm}
+  .pr-log th{font-family:var(--mono);font-size:7pt;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;text-align:left;
+    padding:2mm 2.5mm;border-bottom:1.2pt solid #003C3E}
+  .pr-log td{padding:2.6mm 2.5mm;border-bottom:.5pt solid #C9D9D8;
+    vertical-align:top}
+  .pr-log .c{text-align:center;font-family:var(--mono);font-size:8.4pt;
+    white-space:nowrap}
+  .pr-log td.c{font-variant-numeric:tabular-nums}
+  .pr-log .fx{font-weight:600;letter-spacing:.1em}
+  .pr-log tbody tr{page-break-inside:avoid}
+  .pr-log tfoot th,.pr-log tfoot td{border-top:1.2pt solid #003C3E;
+    border-bottom:none;padding-top:2.6mm;font-weight:600}
+  /* The boxes you fill in with a pen, which is the point of a paper log.
+     Drawn as an inline rule on the text baseline, NOT as border-bottom:
+     a border sits on the cell edge, where it lands underneath the row rule
+     and cannot be seen. */
+  .fill::before{content:"";display:inline-block;width:17mm;
+    border-bottom:.6pt solid #8FADAC;vertical-align:.6mm}
+  .pr-log td.fill::before{width:13mm}
+  td.fill{min-width:20mm}
+
+  .pr-remarks{margin-top:8mm;page-break-inside:avoid}
+  .pr-remarks h2{font-family:var(--mono);font-size:7pt;font-weight:600;
+    letter-spacing:.2em;text-transform:uppercase;opacity:.6;margin:0 0 2.5mm;
+    padding-bottom:1.5mm;border-bottom:.5pt solid #C9D9D8}
+  .pr-remarks p{margin:0 0 2mm;max-width:150mm}
+  .pr-remarks em{font-style:normal;font-weight:700}
+
+  .pr-foot{display:flex;align-items:flex-end;gap:6mm;margin-top:14mm;
+    font-family:var(--mono);font-size:7pt;letter-spacing:.16em;
+    text-transform:uppercase;opacity:.75}
+  .pr-foot .sig{flex:1;border-bottom:.5pt solid #7FA0A0;height:7mm}
+}
+
+/* squawk 7600 — comms lost, so the page stops talking */
+body.silent *,body.silent *::before,body.silent *::after{
+  animation-play-state:paused !important}
+
+/* four taps on the header clover */
+/* Four taps on the clover, one petal lighting per tap. A keyframe rather
+   than a transition: removing a transitioned rotate(360deg) animates it
+   back to 0 and the mark visibly unwinds. touch-action stops iOS reading
+   four fast taps as a double-tap zoom. */
+.brand{touch-action:manipulation}
+.brand svg path{transform-box:fill-box;transform-origin:center;
+  transition:transform .24s cubic-bezier(.34,1.5,.64,1)}
+.brand svg path.lit{transform:scale(1.3)}
+.brand.spun svg{animation:cloverSpin .75s cubic-bezier(.34,1.2,.64,1)}
+@keyframes cloverSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){
+  .brand svg path{transition:none}
+  .brand.spun svg{animation:none}
+}
+
+/* the transponder — how a code gets entered without a keyboard */
+.sqk{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:600;
+  font-size:.66rem;letter-spacing:.14em;color:var(--sky);opacity:.45;
+  transition:opacity .25s ease}
+.sqk:focus-within{opacity:1}
+.sqk input{width:5.4em;background:transparent;border:none;
+  border-bottom:1px solid currentColor;color:var(--sunset);font:inherit;
+  letter-spacing:.2em;padding:3px 0;text-align:center;text-transform:uppercase}
+.sqk input:focus{outline:none;border-bottom-color:var(--sunset)}
+.sqk input::placeholder{color:var(--sky);opacity:.45;letter-spacing:.2em}
 
 /* nav log — the stats, as flight-plan data */
 .navlog{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;margin-top:36px;
@@ -398,6 +524,13 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
     <path fill="#B2E5ED" d="M 54.24 65.22 C 50.37 61.29, 39.78 60.45, 28.26 63.54 C 14.71 67.17, 5.0 74.85, 6.57 80.71 C 8.14 86.56, 20.39 88.37, 33.94 84.74 C 34.3 84.64, 34.67 84.53, 35.03 84.43 C 34.93 84.79, 34.83 85.16, 34.73 85.53 C 31.1 99.07, 32.9 111.33, 38.75 112.89 C 44.61 114.46, 52.3 104.75, 55.93 91.21 C 59.02 79.68, 58.17 69.09, 54.24 65.22 Z"/>
     <path fill="#FAFAEF" d="M 91.87 63.08 C 80.73 60.09, 70.31 61.31, 65.91 65.63 C 65.88 65.65, 65.85 65.68, 65.82 65.71 C 65.79 65.74, 65.76 65.77, 65.73 65.8 C 61.42 70.21, 60.2 80.62, 63.19 91.77 C 66.83 105.36, 75.35 114.89, 82.21 113.05 C 88.45 111.38, 91.18 100.89, 88.88 88.78 C 100.99 91.07, 111.49 88.35, 113.16 82.11 C 115.0 75.24, 105.47 66.72, 91.87 63.08 Z"/>
   </symbol>
+  <!-- paper: the Cloud petal would be invisible on white -->
+  <symbol id="mk-print" viewBox="0 0 120 120">
+    <path fill="#FF6950" d="M 63.66 55.79 C 66.19 58.38, 77.18 57.94, 89.71 54.59 C 103.44 50.91, 113.81 45.12, 112.88 41.65 C 111.95 38.18, 100.07 38.35, 86.34 42.02 C 81.11 43.43, 76.36 45.14, 72.54 46.91 C 74.31 43.09, 76.02 38.34, 77.42 33.1 C 81.1 19.38, 81.27 7.5, 77.8 6.57 C 74.33 5.64, 68.54 16.01, 64.86 29.74 C 61.5 42.27, 61.07 53.26, 63.66 55.79 Z"/>
+    <path fill="#CAE274" d="M 40.16 6.42 C 35.27 7.73, 34.26 19.81, 37.9 33.41 C 38.51 35.67, 39.21 37.84, 39.97 39.87 C 37.94 39.1, 35.78 38.4, 33.51 37.8 C 19.91 34.16, 7.83 35.17, 6.52 40.06 C 5.21 44.95, 15.17 51.87, 28.76 55.51 C 40.8 58.74, 51.64 58.31, 54.89 54.79 C 58.42 51.54, 58.84 40.69, 55.61 28.66 C 51.97 15.07, 45.05 5.11, 40.16 6.42 Z"/>
+    <path fill="#B2E5ED" d="M 54.24 65.22 C 50.37 61.29, 39.78 60.45, 28.26 63.54 C 14.71 67.17, 5.0 74.85, 6.57 80.71 C 8.14 86.56, 20.39 88.37, 33.94 84.74 C 34.3 84.64, 34.67 84.53, 35.03 84.43 C 34.93 84.79, 34.83 85.16, 34.73 85.53 C 31.1 99.07, 32.9 111.33, 38.75 112.89 C 44.61 114.46, 52.3 104.75, 55.93 91.21 C 59.02 79.68, 58.17 69.09, 54.24 65.22 Z"/>
+    <path fill="#003C3E" d="M 91.87 63.08 C 80.73 60.09, 70.31 61.31, 65.91 65.63 C 65.88 65.65, 65.85 65.68, 65.82 65.71 C 65.79 65.74, 65.76 65.77, 65.73 65.8 C 61.42 70.21, 60.2 80.62, 63.19 91.77 C 66.83 105.36, 75.35 114.89, 82.21 113.05 C 88.45 111.38, 91.18 100.89, 88.88 88.78 C 100.99 91.07, 111.49 88.35, 113.16 82.11 C 115.0 75.24, 105.47 66.72, 91.87 63.08 Z"/>
+  </symbol>
   <symbol id="mk-mono" viewBox="0 0 120 120">
     <g fill="currentColor">
       <path d="M 63.66 55.79 C 66.19 58.38, 77.18 57.94, 89.71 54.59 C 103.44 50.91, 113.81 45.12, 112.88 41.65 C 111.95 38.18, 100.07 38.35, 86.34 42.02 C 81.11 43.43, 76.36 45.14, 72.54 46.91 C 74.31 43.09, 76.02 38.34, 77.42 33.1 C 81.1 19.38, 81.27 7.5, 77.8 6.57 C 74.33 5.64, 68.54 16.01, 64.86 29.74 C 61.5 42.27, 61.07 53.26, 63.66 55.79 Z"/>
@@ -425,7 +558,9 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
 
 <header class="site-head">
   <div class="in">
-    <a class="brand" href="#"><svg viewBox="0 0 120 120"><use href="#mk-dark"/></svg>Plane &amp; Prop</a>
+    <!-- petals inlined, not <use>: they light one at a time and
+         external CSS cannot style into a shadow tree -->
+    <a class="brand" href="#"><svg viewBox="0 0 120 120" aria-hidden="true"><path class="p1" fill="#FF6950" d="M 63.66 55.79 C 66.19 58.38, 77.18 57.94, 89.71 54.59 C 103.44 50.91, 113.81 45.12, 112.88 41.65 C 111.95 38.18, 100.07 38.35, 86.34 42.02 C 81.11 43.43, 76.36 45.14, 72.54 46.91 C 74.31 43.09, 76.02 38.34, 77.42 33.1 C 81.1 19.38, 81.27 7.5, 77.8 6.57 C 74.33 5.64, 68.54 16.01, 64.86 29.74 C 61.5 42.27, 61.07 53.26, 63.66 55.79 Z"/><path class="p2" fill="#CAE274" d="M 40.16 6.42 C 35.27 7.73, 34.26 19.81, 37.9 33.41 C 38.51 35.67, 39.21 37.84, 39.97 39.87 C 37.94 39.1, 35.78 38.4, 33.51 37.8 C 19.91 34.16, 7.83 35.17, 6.52 40.06 C 5.21 44.95, 15.17 51.87, 28.76 55.51 C 40.8 58.74, 51.64 58.31, 54.89 54.79 C 58.42 51.54, 58.84 40.69, 55.61 28.66 C 51.97 15.07, 45.05 5.11, 40.16 6.42 Z"/><path class="p3" fill="#B2E5ED" d="M 54.24 65.22 C 50.37 61.29, 39.78 60.45, 28.26 63.54 C 14.71 67.17, 5.0 74.85, 6.57 80.71 C 8.14 86.56, 20.39 88.37, 33.94 84.74 C 34.3 84.64, 34.67 84.53, 35.03 84.43 C 34.93 84.79, 34.83 85.16, 34.73 85.53 C 31.1 99.07, 32.9 111.33, 38.75 112.89 C 44.61 114.46, 52.3 104.75, 55.93 91.21 C 59.02 79.68, 58.17 69.09, 54.24 65.22 Z"/><path class="p4" fill="#FAFAEF" d="M 91.87 63.08 C 80.73 60.09, 70.31 61.31, 65.91 65.63 C 65.88 65.65, 65.85 65.68, 65.82 65.71 C 65.79 65.74, 65.76 65.77, 65.73 65.8 C 61.42 70.21, 60.2 80.62, 63.19 91.77 C 66.83 105.36, 75.35 114.89, 82.21 113.05 C 88.45 111.38, 91.18 100.89, 88.88 88.78 C 100.99 91.07, 111.49 88.35, 113.16 82.11 C 115.0 75.24, 105.47 66.72, 91.87 63.08 Z"/></svg>Plane &amp; Prop</a>
     <nav class="site-nav">
       <a href="#"><span class="dot" style="background:var(--sky)"></span>Philosophy</a>
       <a href="#"><span class="dot" style="background:var(--beige)"></span>Mentorship</a>
@@ -465,7 +600,7 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
           <circle class="ring" cx="120" cy="120" r="99"/>
           <g id="outerScale"></g>
           <circle class="ring" cx="120" cy="120" r="86"/>
-          <g class="rot"><g id="innerScale"></g></g>
+          <g class="rot"><g id="innerScale"></g><g id="rateIdx"></g></g>
           <circle class="ring" cx="120" cy="120" r="56"/>
           <g id="windows"></g>
           <polygon class="idx" points="120,2 126.5,17 113.5,17"/>
@@ -656,8 +791,97 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
       <p>&copy; 2026 Plane &amp; Prop. We make aviators, not pilots.</p>
       <p><a href="#">[Privacy]</a> &nbsp; <a href="#">[Terms]</a></p>
     </div>
+
+    <!-- The transponder. Reads as chart furniture, and it is the one place
+         on the page where typing a code is the obvious thing to do — which
+         is exactly how a phone gets at the codes a keyboard reaches. -->
+    <label class="sqk">
+      <span>SQUAWK</span>
+      <input id="sqk" type="text" inputmode="text" autocomplete="off"
+             autocapitalize="characters" spellcheck="false" maxlength="6"
+             placeholder="1200" aria-label="Transponder code">
+    </label>
   </div>
 </footer>
+
+<!-- =================== the print easter egg ========================
+     Ctrl+P does not print the web page. It prints the flight plan the
+     page has been pretending to be all along - real fix names, real
+     distances taken from the waypoint annotations, and blank ATA boxes
+     to fill in by hand.
+
+     Built from hairlines and foreground SVG only. No filled panels
+     anywhere, because "background graphics" is off by default in every
+     browser's print dialog, and a printout that depends on it arrives
+     as a page of empty boxes. -->
+<div class="printout">
+
+  <header class="pr-head">
+    <div class="pr-brand">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><use href="#mk-print"/></svg>
+      <div>
+        <b>Plane &amp; Prop</b>
+        <span>VFR Navigation Log</span>
+      </div>
+    </div>
+    <table class="pr-meta">
+      <tr><th>Aircraft ident</th><td>VT-PNP</td></tr>
+      <tr><th>Departure</th><td>DEPRT</td></tr>
+      <tr><th>Destination</th><td>ARIVE</td></tr>
+      <tr><th>Date</th><td class="fill"></td></tr>
+    </table>
+  </header>
+
+  <table class="pr-plan">
+    <tr>
+      <th>True airspeed</th><td>120 kt</td>
+      <th>Total distance</th><td>68 nm</td>
+      <th>Est. time enroute</th><td>00:34</td>
+      <th>Fuel burn</th><td>8.0 gph</td>
+    </tr>
+    <tr>
+      <th>Cruising altitude</th><td class="fill"></td>
+      <th>Persons on board</th><td>[000]</td>
+      <th>Fuel on board</th><td class="fill"></td>
+      <th>Cost to read</th><td>Nothing</td>
+    </tr>
+  </table>
+
+  <table class="pr-log">
+    <caption>Navigation log &#183; six legs</caption>
+    <thead>
+      <tr>
+        <th class="c">Fix</th><th class="c">MC</th><th class="c">Dist</th>
+        <th class="c">ETE</th><th class="c">ATA</th><th>Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="c fx">DEPRT</td><td class="c">&#8212;</td><td class="c">&#8212;</td><td class="c">&#8212;</td><td class="c fill"></td><td>Departure. An aviation community. Field elev [000].</td></tr>
+      <tr><td class="c fx">JUDGE</td><td class="c">283&#176;</td><td class="c">12</td><td class="c">06:00</td><td class="c fill"></td><td>Philosophy. A licence proves you can fly; it doesn&#8217;t make you an aviator.</td></tr>
+      <tr><td class="c fx">LEARN</td><td class="c">251&#176;</td><td class="c">12</td><td class="c">06:00</td><td class="c fill"></td><td>What you get. What actually happens inside.</td></tr>
+      <tr><td class="c fx">MNTOR</td><td class="c">326&#176;</td><td class="c">14</td><td class="c">07:00</td><td class="c fill"></td><td>One to one. This is the leg that costs money &#8212; we would rather say so plainly.</td></tr>
+      <tr><td class="c fx">CREWW</td><td class="c">167&#176;</td><td class="c">13</td><td class="c">06:30</td><td class="c fill"></td><td>The people. Most of the proof lives inside a closed group.</td></tr>
+      <tr><td class="c fx">STORE</td><td class="c">140&#176;</td><td class="c">9</td><td class="c">04:30</td><td class="c fill"></td><td>Merch. Small runs, made properly.</td></tr>
+      <tr><td class="c fx">ARIVE</td><td class="c">095&#176;</td><td class="c">8</td><td class="c">04:00</td><td class="c fill"></td><td>Destination. Cleared to join.</td></tr>
+    </tbody>
+    <tfoot>
+      <tr><th class="c">Totals</th><td class="c">&#8212;</td><td class="c">68</td><td class="c">00:34</td><td class="c"></td><td>Reserve not included. Check it on the E6B before you go.</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="pr-remarks">
+    <h2>Remarks</h2>
+    <p>The joy of flying is <em>bigger</em> than any title you&#8217;ll ever earn.</p>
+    <p>The group is free. It always has been. Mentorship is the one thing that isn&#8217;t, and it is priced in the open.</p>
+  </div>
+
+  <footer class="pr-foot">
+    <span>Pilot in command</span>
+    <span class="sig"></span>
+    <span>planeandprop.com</span>
+  </footer>
+
+</div>
 
 <script>
 /* ======================= loader -> header logo =======================
@@ -770,6 +994,23 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
     outer.innerHTML=build(99,115,107,'');
     inner.innerHTML=build(56,86,72,'inner');
 
+    /* The rate index. On a real E6B the rotating disc carries a triangle
+       at its 60 graduation, because 60 is what turns "per hour" into
+       "per minute". You line that arrow up against ground speed on the
+       fixed outer scale, and every other answer falls out of the same
+       rotation. It is the landmark you actually aim with — without it
+       this reads as a dial rather than an instrument. */
+    (function rateIndex(){
+      var g=document.getElementById('rateIdx'); if(!g) return;
+      var a=ang(60), apex=P(a,53.5), bl=P(a-3.2,43), br=P(a+3.2,43),
+          lab=P(a,36);
+      g.innerHTML=
+        '<polygon class="rate" points="'+apex.join(',')+' '+bl.join(',')+' '+br.join(',')+'"/>'+
+        '<text class="rlab" x="'+lab[0]+'" y="'+lab[1]+'" text-anchor="middle" '+
+        'dominant-baseline="central" transform="rotate('+(a+90).toFixed(1)+' '+
+        lab[0]+' '+lab[1]+')">RATE</text>';
+    })();
+
     // the small cut-out windows an E6B carries round its face
     var W=[['AIR TEMP °C',46],['PRESS ALT',134],['TAS',226],['CAS',314]];
     var o='';
@@ -821,6 +1062,10 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
       out.classList.add('on');
       hint.hidden=false;
       render();
+      /* Arming the E6B is the one deliberate, opt-in gesture on the page,
+         which makes it the only defensible moment to ask iOS for motion
+         access. Asking every visitor on first tap would be intrusive. */
+      document.dispatchEvent(new CustomEvent('pp:armed'));
     }
 
     wrap.addEventListener('click', function(e){ if(!dragging) activate(); });
@@ -1178,34 +1423,152 @@ body.roll{animation:barrel 1.5s cubic-bezier(.32,0,.28,1)}
     requestAnimationFrame(function(){onScroll();tick=false;});
   },{passive:true});
 
-  /* ---- typed easter eggs ---------------------------------------------
-     Nothing announces these. Aviation has its own vocabulary, and using
-     that vocabulary as the key is the joke — you only find them if you
-     already think in it.
-       roll — the page rolls through 360 degrees
-       ifr  — instrument conditions; the page goes into cloud
-       vfr  — back into clear air                                      */
+  /* ---- easter eggs ----------------------------------------------------
+     Two doors into the same set. A keyboard reaches them by typing the
+     word; a thumb reaches them through the transponder in the footer, a
+     long press, or a shake. Nothing is announced anywhere.
+
+       roll        the page rolls through 360 degrees
+       ifr / vfr   into cloud, and back into clear air
+       7600        comms lost — every animation on the page stops
+       1200        squawk VFR: nothing to declare, everything reset      */
   (function eggs(){
-    var buf='', reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     var imc=document.getElementById('imc'), badge=document.getElementById('imcBadge');
+    var body=document.body;
+
     function setIMC(on){
       if(!imc) return;
       imc.classList.toggle('on',on);
       if(badge) badge.classList.toggle('on',on);
     }
+    function doRoll(){
+      if(reduce || body.classList.contains('roll')) return;
+      /* Rotate about the centre of the VIEWPORT, not the centre of the
+         document — body is thousands of pixels tall, so its own origin
+         would swing the page off screen instead of rolling it. */
+      body.style.transformOrigin='50% '+(window.scrollY+window.innerHeight/2)+'px';
+      body.classList.add('roll');
+      setTimeout(function(){
+        body.classList.remove('roll');
+        body.style.transformOrigin='';
+      },1600);
+    }
+    /* One table, so the keyboard and the transponder can never drift apart. */
+    var CODES={
+      roll:doRoll,
+      ifr:function(){ setIMC(true); },
+      vfr:function(){ setIMC(false); },
+      '7600':function(){ body.classList.add('silent'); },
+      '1200':function(){ setIMC(false); body.classList.remove('silent'); }
+    };
+    function fire(k){ var f=CODES[k]; if(f){ f(); return true; } return false; }
+
+    /* --- door 1: type it (laptop, desktop, keyboard-attached iPad) --- */
+    var buf='';
     document.addEventListener('keydown', function(e){
-      var t=e.target.tagName;                       // never hijack a real field
+      var t=e.target.tagName;                     // never hijack a real field
       if(t==='INPUT'||t==='TEXTAREA'||e.target.isContentEditable) return;
       if(e.key.length!==1) return;
       buf=(buf+e.key.toLowerCase()).slice(-8);
-
-      if(buf.endsWith('roll') && !reduce && !document.body.classList.contains('roll')){
-        document.body.classList.add('roll');
-        setTimeout(function(){ document.body.classList.remove('roll'); }, 1600);
-      }
-      if(buf.endsWith('ifr')) setIMC(true);
-      if(buf.endsWith('vfr')) setIMC(false);
+      ['roll','ifr','vfr','7600','1200'].forEach(function(k){
+        if(buf.endsWith(k)) fire(k);
+      });
     });
+
+    /* --- door 2: the transponder (phone, tablet — anything with a
+           soft keyboard). Fires as you type, so there is no submit
+           button to find and no hint that anything is listening. --- */
+    var sqk=document.getElementById('sqk');
+    if(sqk){
+      sqk.addEventListener('input', function(){
+        var v=sqk.value.trim().toLowerCase();
+        if(fire(v)) setTimeout(function(){ sqk.value=''; sqk.blur(); },260);
+      });
+    }
+
+    /* --- door 3: long press anywhere quiet — the cloud closes in.
+           The touch equivalent of typing ifr, and it toggles, so the
+           same gesture gets you back out into clear air. --- */
+    var timer=null, sx=0, sy=0;
+    function cancel(){ if(timer){ clearTimeout(timer); timer=null; } }
+    document.addEventListener('pointerdown', function(e){
+      if(e.pointerType==='mouse') return;         // desktop already has ifr
+      // never steal a press meant for something interactive
+      if(e.target.closest('a,button,input,label,.e6b')) return;
+      sx=e.clientX; sy=e.clientY;
+      cancel();
+      timer=setTimeout(function(){
+        timer=null;
+        setIMC(!imc.classList.contains('on'));
+      },620);
+    },{passive:true});
+    document.addEventListener('pointermove', function(e){
+      if(!timer) return;
+      if(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10) cancel();  // a scroll, not a press
+    },{passive:true});
+    ['pointerup','pointercancel','scroll'].forEach(function(ev){
+      document.addEventListener(ev,cancel,{passive:true});
+    });
+
+    /* --- door 4: shake to roll. iOS 13+ will not hand over motion data
+           without an explicit grant, and that grant needs a user gesture,
+           so we only ask once someone has armed the E6B. Everywhere else
+           it just works. --- */
+    var shakeOn=false, last=0, lx=0,ly=0,lz=0;
+    function listenShake(){
+      if(shakeOn) return; shakeOn=true;
+      window.addEventListener('devicemotion', function(e){
+        var a=e.accelerationIncludingGravity; if(!a) return;
+        var now=Date.now(); if(now-last<220) return;
+        var d=Math.abs(a.x-lx)+Math.abs(a.y-ly)+Math.abs(a.z-lz);
+        lx=a.x; ly=a.y; lz=a.z; last=now;
+        if(d>34) doRoll();
+      });
+    }
+    document.addEventListener('pp:armed', function(){
+      var DM=window.DeviceMotionEvent;
+      if(DM && typeof DM.requestPermission==='function'){
+        DM.requestPermission().then(function(r){ if(r==='granted') listenShake(); })
+          .catch(function(){});                   // declined is a fine outcome
+      } else { listenShake(); }
+    });
+
+    /* --- door 5: four taps on the header clover, one per petal. The
+           cheapest egg here and the one a phone will find first, because
+           tapping a logo is what people do while a page loads. --- */
+    var brand=document.querySelector('.brand');
+    if(brand){
+      var petals=[].slice.call(brand.querySelectorAll('svg path'));
+      var taps=0, tapAt=0, lapse=null;
+      function dim(){ petals.forEach(function(el){ el.classList.remove('lit'); }); }
+
+      brand.addEventListener('click', function(e){
+        e.preventDefault();                     // href="#" is a placeholder
+        var now=Date.now();
+        taps = (now-tapAt<700) ? taps+1 : 1;    // 700ms is a comfortable tap rhythm
+        tapAt=now;
+        clearTimeout(lapse);
+
+        if(taps===1){
+          dim();
+          window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+        }
+        // one petal per tap — the lit count IS the hint that something is counting
+        if(petals[taps-1]) petals[taps-1].classList.add('lit');
+
+        if(taps>=4){
+          taps=0;
+          brand.classList.add('spun');
+          setTimeout(function(){
+            brand.classList.remove('spun');     // past the keyframe, so nothing unwinds
+            dim();
+          },780);
+        } else {
+          lapse=setTimeout(dim,900);            // stop tapping and it lets go
+        }
+      });
+    }
   })();
 })();
 </script>
